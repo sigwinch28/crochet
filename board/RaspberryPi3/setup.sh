@@ -1,4 +1,4 @@
-KERNCONF=GENERIC-UP
+KERNCONF=GENERIC
 RPI3_UBOOT_PORT="u-boot-rpi3"
 RPI3_UBOOT_BIN="u-boot.bin"
 RPI3_UBOOT_PATH="/usr/local/share/u-boot/${RPI3_UBOOT_PORT}"
@@ -6,6 +6,7 @@ IMAGE_SIZE=$((2000 * 1000 * 1000))
 TARGET_ARCH=aarch64
 TARGET=aarch64
 DTB_REPO="https://github.com/raspberrypi/firmware/blob/master/boot/"
+SMP_DIR="https://people.freebsd.org/~gonzo/arm/rpi3-smp/"
 
 # Not used - just in case someone wants to use a manual ubldr.  Obtained
 # from 'printenv' in boot0: kernel_addr_r=0x42000000
@@ -40,14 +41,18 @@ raspberry_pi_populate_boot_partition ( ) {
     cp ${UBOOT_PATH}/start.elf .
     cp ${UBOOT_PATH}/start_cd.elf .
     cp ${UBOOT_PATH}/start_x.elf .
-    cp ${UBOOT_PATH}/u-boot.bin .
+
+    smps="armstub8.bin u-boot.bin"
+    for i in ${smps}; do
+        fetch -o ${i} "${SMP_DIR}/${i}"
+    done
 
     # Populate config.txt
     echo "arm_control=0x200" > config.txt
     echo "dtparam=audio=on,i2c_arm=on,spi=on" >> config.txt
     echo "dtoverlay=mmc" >> config.txt
     echo "dtoverlay=pi3-disable-bt" >> config.txt
-    echo "device_tree_address=0x100" >> config.txt
+    echo "device_tree_address=0x4000" >> config.txt
     echo "kernel=u-boot.bin" >> config.txt
 
     # Fetch the dtb
